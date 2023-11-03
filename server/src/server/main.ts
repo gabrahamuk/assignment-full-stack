@@ -102,6 +102,10 @@ function serializeProcurementRecord(
       id: buyer.id,
       name: buyer.name,
     },
+    value: {
+      amount: record.value,
+      currency: record.currency,
+    },
   };
 }
 

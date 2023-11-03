@@ -39,6 +39,10 @@ function RecordsTable(props: Props) {
         title: "Buyer name",
         render: (record: ProcurementRecord) => record.buyer.name,
       },
+      {
+        title: "Value",
+        render: (record: ProcurementRecord) => getRecordValue(record),
+      },
     ];
   }, []);
   return (
@@ -50,6 +54,27 @@ function RecordsTable(props: Props) {
       />
     </>
   );
+}
+
+function getRecordValue(record: ProcurementRecord): string {
+  let res = "";
+  if (record.value.amount && record.value.currency) {
+    const perUnitTime: boolean = record.value.currency.includes("/");
+    let [currency, timeUnit]: string[] = perUnitTime
+      ? record.value.currency.split("/")
+      : [record.value.currency, ""];
+
+    const formatter = new Intl.NumberFormat("default", {
+      style: "currency",
+      currency: currency,
+    });
+
+    res =
+      `${formatter.format(record.value.amount)}` +
+      `${perUnitTime ? " / " : ""}` +
+      timeUnit;
+  }
+  return res;
 }
 
 export default RecordsTable;
