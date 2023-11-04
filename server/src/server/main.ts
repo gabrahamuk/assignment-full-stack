@@ -106,6 +106,11 @@ function serializeProcurementRecord(
       amount: record.value,
       currency: record.currency,
     },
+    stageInfo: {
+      stage: record.stage,
+      closeDate: record.close_date,
+      awardDate: record.award_date,
+    },
   };
 }
 

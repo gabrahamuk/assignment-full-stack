@@ -17,6 +17,11 @@ export type ProcurementRecord = {
     amount: number;
     currency: string;
   };
+  stageInfo: {
+    stage: string;
+    closeDate?: string;
+    awardDate?: string;
+  };
 };
 
 export type SearchRecordsResponse = {

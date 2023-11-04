@@ -43,6 +43,10 @@ function RecordsTable(props: Props) {
         title: "Value",
         render: (record: ProcurementRecord) => getRecordValue(record),
       },
+      {
+        title: "Stage",
+        render: (record: ProcurementRecord) => getStage(record),
+      },
     ];
   }, []);
   return (
@@ -73,6 +77,40 @@ function getRecordValue(record: ProcurementRecord): string {
       `${formatter.format(record.value.amount)}` +
       `${perUnitTime ? " / " : ""}` +
       timeUnit;
+  }
+  return res;
+}
+
+function getStage(record: ProcurementRecord): string {
+  const isAfterToday: (stringDate: string) => boolean = (stringDate) => {
+    if (stringDate) {
+      // compare to current date
+      return new Date(stringDate) > new Date();
+    }
+    return false;
+  };
+
+  let res: string = "";
+  switch (record.stageInfo.stage) {
+    /*TODO:
+     * convert stage into an enum type to detect data errors here
+     * specify behaviour for TenderIntent
+     */
+    case "TENDER":
+      if (isAfterToday(record.stageInfo.closeDate)) {
+        res = `Open until ${record.stageInfo.closeDate}`;
+      } else {
+        res = "Closed";
+      }
+      break;
+    case "CONTRACT":
+      if (record.stageInfo.awardDate) {
+        res = `Awarded on ${record.stageInfo.awardDate}`;
+      }
+      break;
+    default:
+      // TODO: handle error here for unknown stage
+      break;
   }
   return res;
 }

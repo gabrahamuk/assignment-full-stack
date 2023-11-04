@@ -14,6 +14,12 @@ export type ValueDto = {
   currency: string;
 };
 
+export type StageDto = {
+  stage: string;
+  closeDate?: string;
+  awardDate?: string;
+};
+
 export type ProcurementRecordDto = {
   id: string;
   title: string;
@@ -21,6 +27,7 @@ export type ProcurementRecordDto = {
   buyer: BuyerDto;
   publishDate: string;
   value: ValueDto;
+  stageInfo: StageDto;
 };
 
 export type RecordSearchResponse = {
