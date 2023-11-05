@@ -68,7 +68,10 @@ function RecordsTable(props: Props) {
       // TODO: add a map to map column names to an index. For now we use [2]
       onChange({
         ...filters,
-        buyersQuery: buyerFilters[2],
+        buyersQuery:
+          buyerFilters[2]?.length > 0
+            ? buyerFilters[2].map((b) => buyersNameToIds.get(b)).flat()
+            : [],
       });
     },
     [onChange, filters]
