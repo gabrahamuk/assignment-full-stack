@@ -6,10 +6,11 @@ import ProcurementRecordPreviewModal from "./ProcurementRecordPreview";
 
 type Props = {
   records: ProcurementRecord[];
+  buyersNameToIds: Map<string, string[]>;
 };
 
 function RecordsTable(props: Props) {
-  const { records } = props;
+  const { records, buyersNameToIds } = props;
   const [previewedRecord, setPreviewedRecord] = React.useState<
     ProcurementRecord | undefined
   >();
@@ -38,6 +39,12 @@ function RecordsTable(props: Props) {
       {
         title: "Buyer name",
         render: (record: ProcurementRecord) => record.buyer.name,
+        filters: Array.from(buyersNameToIds.keys())
+          .sort()
+          .map((k: string) => ({
+            text: k,
+            value: k,
+          })),
       },
       {
         title: "Value",

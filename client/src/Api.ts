@@ -29,6 +29,15 @@ export type SearchRecordsResponse = {
   endOfResults: boolean;
 };
 
+export type Buyer = {
+  id: string;
+  name: string;
+};
+
+export type BuyersListResponse = {
+  buyers: Buyer[];
+};
+
 class Api {
   async searchRecords(
     request: SearchRecordsRequest
@@ -39,6 +48,16 @@ class Api {
         "content-type": "application/json",
       },
       body: JSON.stringify(request),
+    });
+    return await response.json();
+  }
+
+  async getBuyers(): Promise<BuyersListResponse> {
+    const response = await fetch("/api/buyers", {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+      },
     });
     return await response.json();
   }

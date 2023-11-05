@@ -2,6 +2,7 @@ import express, { request } from "express";
 
 import { Sequelize } from "sequelize-typescript";
 import {
+  BuyersListResponse,
   ProcurementRecordDto,
   RecordSearchRequest,
   RecordSearchResponse,
@@ -143,6 +144,12 @@ async function serializeProcurementRecords(
   return records.map((r) => serializeProcurementRecord(r, buyersById));
 }
 
+async function getBuyers() {
+  return await sequelize.query("SELECT * FROM buyers;", {
+    model: Buyer,
+  });
+}
+
 /**
  * This endpoint implements basic way to paginate through the search results.
  * It returns a `endOfResults` flag which is true when there are no more records to fetch.
@@ -176,6 +183,13 @@ app.post("/api/records", async (req, res) => {
     endOfResults: records.length <= limit, // in this case we've reached the end of results
   };
 
+  res.json(response);
+});
+
+app.get("/api/buyers", async (_, res) => {
+  const response: BuyersListResponse = {
+    buyers: await getBuyers(),
+  };
   res.json(response);
 });
 
