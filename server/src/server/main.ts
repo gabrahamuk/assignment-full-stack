@@ -2,6 +2,7 @@ import express, { request } from "express";
 
 import { Sequelize } from "sequelize-typescript";
 import {
+  BuyersListResponse,
   ProcurementRecordDto,
   RecordSearchRequest,
   RecordSearchResponse,
@@ -17,6 +18,13 @@ import { ProcurementRecord } from "./db/ProcurementRecord";
  * Sequelize's data mapping is used to get nice JavaScript objects from the database rows.
  *
  * You can switch to using the ORM features or continue using SQL.
+ */
+
+/**
+ * STRUCTURE IMPROVEMENT:
+ * split off functions querying the backend and handling the response
+ * (including their respective types) into their own separate file.
+ * We can leave the app configuration, setup and api endpoints in this file.
  */
 
 const sequelize = new Sequelize({
@@ -42,40 +50,65 @@ app.use(express.json());
 
 type RecordSearchFilters = {
   textSearch?: string;
+  buyersSearch?: string[];
+};
+
+type Replacements = {
+  offset: number;
+  limit: number;
+  textSearch?: string;
+  buyersSearch?: string[];
 };
 
 /**
  * Queries the database for procurement records according to the search filters.
  */
 async function searchRecords(
-  { textSearch }: RecordSearchFilters,
+  { textSearch, buyersSearch }: RecordSearchFilters,
   offset: number,
   limit: number
 ): Promise<ProcurementRecord[]> {
-  if (textSearch) {
-    return await sequelize.query(
-      "SELECT * FROM procurement_records WHERE title LIKE :textSearch OR description LIKE :textSearch LIMIT :limit OFFSET :offset",
-      {
-        model: ProcurementRecord, // by setting this sequelize will return a list of ProcurementRecord objects
-        replacements: {
-          textSearch: `%${textSearch}%`,
-          offset: offset,
-          limit: limit,
-        },
+  const getQuery: (
+    textSearch: string,
+    buyersSearch: string[],
+    offset: number,
+    limit: number
+  ) => [string, Replacements] = (textSearch, buyersSearch, offset, limit) => {
+    let replacements: Replacements = { offset: offset, limit: limit };
+    let query: string = "SELECT * FROM procurement_records ";
+    const hasBuyers: boolean = buyersSearch?.length > 0;
+
+    if (textSearch || hasBuyers) {
+      query += "WHERE ";
+      if (textSearch) {
+        query += "(title LIKE :textSearch OR description LIKE :textSearch) ";
+        replacements = { ...replacements, textSearch: `%${textSearch}%` };
+        if (hasBuyers) {
+          query += "AND ";
+        }
       }
-    );
-  } else {
-    return await sequelize.query(
-      "SELECT * FROM procurement_records LIMIT :limit OFFSET :offset",
-      {
-        model: ProcurementRecord,
-        replacements: {
-          offset: offset,
-          limit: limit,
-        },
+
+      if (hasBuyers) {
+        query += "buyer_id IN (:buyersSearch) ";
+        replacements = { ...replacements, buyersSearch: buyersSearch };
       }
-    );
-  }
+    }
+
+    query += "LIMIT :limit OFFSET :offset";
+    return [query, replacements];
+  };
+
+  const [query, replacements] = getQuery(
+    textSearch,
+    buyersSearch,
+    offset,
+    limit
+  );
+
+  return await sequelize.query(query, {
+    model: ProcurementRecord, // by setting this sequelize will return a list of ProcurementRecord objects
+    replacements: replacements,
+  });
 }
 
 /**
@@ -143,6 +176,12 @@ async function serializeProcurementRecords(
   return records.map((r) => serializeProcurementRecord(r, buyersById));
 }
 
+async function getBuyers() {
+  return await sequelize.query("SELECT * FROM buyers;", {
+    model: Buyer,
+  });
+}
+
 /**
  * This endpoint implements basic way to paginate through the search results.
  * It returns a `endOfResults` flag which is true when there are no more records to fetch.
@@ -164,6 +203,7 @@ app.post("/api/records", async (req, res) => {
   const records = await searchRecords(
     {
       textSearch: requestPayload.textSearch,
+      buyersSearch: requestPayload.buyersSearch,
     },
     offset,
     limit + 1
@@ -176,6 +216,13 @@ app.post("/api/records", async (req, res) => {
     endOfResults: records.length <= limit, // in this case we've reached the end of results
   };
 
+  res.json(response);
+});
+
+app.get("/api/buyers", async (_, res) => {
+  const response: BuyersListResponse = {
+    buyers: await getBuyers(),
+  };
   res.json(response);
 });
 

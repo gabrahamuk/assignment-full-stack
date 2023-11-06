@@ -1,6 +1,6 @@
 import { Button } from "antd";
 import React from "react";
-import Api, { ProcurementRecord } from "./Api";
+import Api, { Buyer, ProcurementRecord } from "./Api";
 import RecordSearchFilters, { SearchFilters } from "./RecordSearchFilters";
 import RecordsTable from "./RecordsTable";
 
@@ -21,8 +21,13 @@ const PAGE_SIZE = 10;
 function RecordSearchPage() {
   const [page, setPage] = React.useState<number>(1);
   const [searchFilters, setSearchFilters] = React.useState<SearchFilters>({
-    query: "",
+    textSearchQuery: "",
+    buyersQuery: [],
   });
+
+  const [buyersNameToIds, setBuyers] = React.useState<
+    Map<string, string[]> | undefined
+  >();
 
   const [records, setRecords] = React.useState<
     ProcurementRecord[] | undefined
@@ -33,19 +38,39 @@ function RecordSearchPage() {
   React.useEffect(() => {
     void (async () => {
       const api = new Api();
-      const response = await api.searchRecords({
-        textSearch: searchFilters.query,
+
+      // Improvement: add caching to store buyers and avoid this being recalled
+      // Can add event-driven trigger to update cache when new buyer is added
+      const buyersResponse = await api.getBuyers();
+
+      // map names to IDs in the event that we have the same buyer name mapping to different IDs e.g. same org name but different countries
+      // TODO: perhaps append countries to duplicated buyer names on backend
+      const buyersNameToIds: Map<string, string[]> = new Map();
+      buyersResponse.buyers.map((b) =>
+        buyersNameToIds.set(
+          b.name,
+          buyersNameToIds.has(b.name)
+            ? [b.id, ...buyersNameToIds.get(b.name)]
+            : [b.id]
+        )
+      );
+
+      setBuyers(buyersNameToIds);
+
+      const recordsResponse = await api.searchRecords({
+        textSearch: searchFilters.textSearchQuery,
+        buyersSearch: searchFilters.buyersQuery,
         limit: PAGE_SIZE,
         offset: PAGE_SIZE * (page - 1),
       });
 
       if (page === 1) {
-        setRecords(response.records);
+        setRecords(recordsResponse.records);
       } else {
         // append new results to the existing records
-        setRecords((oldRecords) => [...oldRecords, ...response.records]);
+        setRecords((oldRecords) => [...oldRecords, ...recordsResponse.records]);
       }
-      setReachedEndOfSearch(response.endOfResults);
+      setReachedEndOfSearch(recordsResponse.endOfResults);
     })();
   }, [searchFilters, page]);
 
@@ -66,7 +91,12 @@ function RecordSearchPage() {
       />
       {records && (
         <>
-          <RecordsTable records={records} />
+          <RecordsTable
+            records={records}
+            buyersNameToIds={buyersNameToIds}
+            filters={searchFilters}
+            onChange={handleChangeFilters}
+          />
           {!reachedEndOfSearch && (
             <Button onClick={handleLoadMore}>Load more</Button>
           )}

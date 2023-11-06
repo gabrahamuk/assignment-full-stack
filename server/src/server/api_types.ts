@@ -1,5 +1,6 @@
 export type RecordSearchRequest = {
   textSearch?: string;
+  buyersSearch?: string[];
   offset: number;
   limit: number;
 };
@@ -33,4 +34,8 @@ export type ProcurementRecordDto = {
 export type RecordSearchResponse = {
   records: ProcurementRecordDto[];
   endOfResults: boolean; // this is true when there are no more results to search
+};
+
+export type BuyersListResponse = {
+  buyers: BuyerDto[];
 };

@@ -3,13 +3,17 @@ import { ColumnType } from "antd/lib/table";
 import React from "react";
 import { ProcurementRecord } from "./Api";
 import ProcurementRecordPreviewModal from "./ProcurementRecordPreview";
+import { SearchFilters } from "./RecordSearchFilters";
 
 type Props = {
   records: ProcurementRecord[];
+  buyersNameToIds: Map<string, string[]>;
+  filters: SearchFilters;
+  onChange: (newFilters: SearchFilters) => void;
 };
 
 function RecordsTable(props: Props) {
-  const { records } = props;
+  const { records, buyersNameToIds, filters, onChange } = props;
   const [previewedRecord, setPreviewedRecord] = React.useState<
     ProcurementRecord | undefined
   >();
@@ -38,6 +42,15 @@ function RecordsTable(props: Props) {
       {
         title: "Buyer name",
         render: (record: ProcurementRecord) => record.buyer.name,
+        filters: Array.from(buyersNameToIds.keys())
+          .sort()
+          .map((k: string) => ({
+            text: k,
+            value: k,
+          })),
+        filterSearch: true,
+        onFilter: (value: string, record: ProcurementRecord) =>
+          value === record.buyer.name,
       },
       {
         title: "Value",
@@ -49,9 +62,30 @@ function RecordsTable(props: Props) {
       },
     ];
   }, []);
+
+  const handleQueryChange = React.useCallback(
+    (pagination, buyerFilters: Record<string, string[]>, sorter, extra) => {
+      // Improvement: add a map to map column names to an index.
+      // For now we use [2] to access Buyer column
+      onChange({
+        ...filters,
+        buyersQuery:
+          buyerFilters[2]?.length > 0
+            ? buyerFilters[2].map((b) => buyersNameToIds.get(b)).flat()
+            : [],
+      });
+    },
+    [onChange, filters]
+  );
+
   return (
     <>
-      <Table columns={columns} dataSource={records} pagination={false} />
+      <Table
+        columns={columns}
+        dataSource={records}
+        pagination={false}
+        onChange={handleQueryChange}
+      />
       <ProcurementRecordPreviewModal
         record={previewedRecord}
         onClose={() => setPreviewedRecord(undefined)}
