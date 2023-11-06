@@ -83,3 +83,6 @@ We can cache the list of buyers and have an event that triggers a cache to updat
 Record sorting/filtering:
 Users may want to see the newest records first so we can add a datetime column to track when records were added to the database and provide sorting for Newest/Oldest first. 
 Additional enhancements can include providing the option to sort/filter by multiple columns, e.g. by Value or Stage. It may also be beneficial for users to see and filter the buyer's Country.
+
+### Error Handling
+Currently, there isn't any error-handling in the code. We will need to utilise types to enforce certain values (e.g. for Stage being "Tenure" | "Contract") and then add error handling for unexpected values that fall outside of these. We'll also need to add error handling for db call failures, providing a notification to users to inform them of errors and steps to retry.
