@@ -65,7 +65,8 @@ function RecordsTable(props: Props) {
 
   const handleQueryChange = React.useCallback(
     (pagination, buyerFilters: Record<string, string[]>, sorter, extra) => {
-      // TODO: add a map to map column names to an index. For now we use [2]
+      // Improvement: add a map to map column names to an index.
+      // For now we use [2] to access Buyer column
       onChange({
         ...filters,
         buyersQuery:

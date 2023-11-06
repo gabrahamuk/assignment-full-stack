@@ -39,7 +39,10 @@ function RecordSearchPage() {
     void (async () => {
       const api = new Api();
 
+      // Improvement: add caching to store buyers and avoid this being recalled
+      // Can add event-driven trigger to update cache when new buyer is added
       const buyersResponse = await api.getBuyers();
+
       // map names to IDs in the event that we have the same buyer name mapping to different IDs e.g. same org name but different countries
       // TODO: perhaps append countries to duplicated buyer names on backend
       const buyersNameToIds: Map<string, string[]> = new Map();

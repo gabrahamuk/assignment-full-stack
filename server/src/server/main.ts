@@ -20,6 +20,13 @@ import { ProcurementRecord } from "./db/ProcurementRecord";
  * You can switch to using the ORM features or continue using SQL.
  */
 
+/**
+ * STRUCTURE IMPROVEMENT:
+ * split off functions querying the backend and handling the response
+ * (including their respective types) into their own separate file.
+ * We can leave the app configuration, setup and api endpoints in this file.
+ */
+
 const sequelize = new Sequelize({
   dialect: "sqlite",
   storage: process.env["SQLITE_DB"] || "./db.sqlite3",
